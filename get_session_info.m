@@ -17,13 +17,14 @@ processors = cell(0);
 electrodes = cell(0);
 
 % LOOP THROUGH TOP-LEVEL NODES
+processorIndex = 0;
 for i = 1:xRoot.getChildNodes.getLength-1
    
     if strcmp(xRoot.item(i).getNodeName, 'SIGNALCHAIN')
         
         xSignalChain = xRoot.item(i);
         
-        processorIndex = 0;
+        
         
         % LOOP THROUGH PROCESSOR NODES
         for j = 1:xSignalChain.getChildNodes.getLength-1
