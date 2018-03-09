@@ -65,6 +65,7 @@ def loadFolder(folderpath,**kwargs):
         if '.continuous' in f:
             data[f.replace('.continuous','')] = loadContinuous(os.path.join(folderpath, f))
             numFiles += 1
+            print(numFiles)
 
     print(''.join(('Avg. Load Time: ', str((time.time() - t0)/numFiles),' sec')))
     print(''.join(('Total Load Time: ', str((time.time() - t0)),' sec')))
@@ -92,7 +93,8 @@ def loadFolderToArray(folderpath, channels = 'all', chprefix = 'CH',
 
     n_samples  = len(channel_1_data)
     n_channels = len(filelist)
-
+	
+    print('making numpy array')
     data_array = np.zeros([n_samples, n_channels], dtype)
     data_array[:,0] = channel_1_data
 
@@ -404,7 +406,7 @@ class ProgressBar:
         return str(self.prog_bar)
 #*************************************************************
 
-def pack_2(folderpath, filename = '', channels = 'all', chprefix = 'CH', 
+def pack_2(folderpath, filename = '', output_folder = '', channels = 'all', chprefix = 'CH', 
            dref = None, session = '0', source = '100'):
 
     '''Alternative version of pack which uses numpy's tofile function to write data.
@@ -431,24 +433,32 @@ def pack_2(folderpath, filename = '', channels = 'all', chprefix = 'CH',
     
     data_array = loadFolderToArray(folderpath, channels, chprefix, np.int16, session, source)
     
+    dref_str=''
     if dref:
         if dref == 'ave':
             print('Digital referencing to average of all channels.')
             reference = np.mean(data_array,1)
+            dref_str = '_CAR'
+        elif dref == 'med':
+            print('Digital referencing to median of all channels.')
+            reference = np.median(data_array,1)
+            dref_str='_CMR'
         else:
             print('Digital referencing to channel ' + str(dref))
             if channels == 'all':
                 channels = _get_sorted_channels(folderpath, chprefix, session, source)
             reference = deepcopy(data_array[:,channels.index(dref)])
+            dref_str = '_ref' + str(dref)
         for i in range(data_array.shape[1]):
             data_array[:,i] = data_array[:,i] - reference
     
     if session == '0': session = ''
     else: session = '_'+session
     
-    if not filename: filename = source + '_' + chprefix + 's' + session + '.dat'
+    if not filename: filename = source + '_' + chprefix + 's' + session + dref_str + '.dat'
+    if not output_folder: output_folder = folderpath
     print('Packing data to file: ' + filename)
-    data_array.tofile(os.path.join(folderpath,filename))
+    data_array.tofile(os.path.join(output_folder,filename))
 
 
 def _get_sorted_channels(folderpath, chprefix='CH', session='0', source='100'):
